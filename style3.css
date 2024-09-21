@@ -36,7 +36,18 @@ li {
     border: 1px solid #ddd;
     padding: 1rem;
     margin-bottom: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 li p {
     margin: 0;
+}
+.like-btn {
+    background-color: #008CBA;
+    color: white;
+    padding: 5px 10px;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
 }
