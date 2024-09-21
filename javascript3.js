@@ -1,6 +1,8 @@
 const loginForm = document.getElementById('login-form'); 
 const usernameInput = document.getElementById('username');
+const passwordInput = document.getElementById('password');
 const loginButton = document.getElementById('login-btn');
+const loginError = document.getElementById('login-error');
 const userDashboard = document.getElementById('user-dashboard');
 const userUsername = document.getElementById('user-username'); 
 const postContent = document.getElementById('post-content'); 
@@ -8,15 +10,26 @@ const postButton = document.getElementById('post-btn');
 const postList = document.getElementById('post-list');
 let currentUser = null;
 
+// Hardcoded user credentials (for demonstration)
+const users = {
+    "user1": "password1",
+    "user2": "password2"
+};
+
 // Event listener for login button 
 loginButton.addEventListener('click', () => {
     const username = usernameInput.value.trim();
-    if (username !== '') {
+    const password = passwordInput.value.trim();
+    
+    // Validate the username and password
+    if (users[username] && users[username] === password) {
         currentUser = username; 
         loginForm.style.display = 'none'; 
         userDashboard.style.display = 'block'; 
         userUsername.textContent = username;
         loadPosts();
+    } else {
+        loginError.style.display = 'block';
     }
 });
 
@@ -26,30 +39,4 @@ postButton.addEventListener('click', () => {
     if (content !== '') {
         const post = {
             username: currentUser,
-            content: content
-        };
-        savePost(post); 
-        postContent.value = '';  // Clear the textarea
-        loadPosts();  // Refresh the feed
-    }
-});
-
-// Save post to local storage
-function savePost(post) {
-    let posts = JSON.parse(localStorage.getItem('posts')) || [];
-    posts.push(post);
-    localStorage.setItem('posts', JSON.stringify(posts));
-}
-
-// Load posts from local storage
-function loadPosts() {
-    postList.innerHTML = '';  // Clear existing posts
-    const posts = JSON.parse(localStorage.getItem('posts')) || [];
-    posts.forEach(post => {
-        const postItem = document.createElement('li');
-        postItem.innerHTML = `
-            <p><strong>${post.username}</strong>: ${post.content}</p>
-        `;
-        postList.appendChild(postItem);
-    });
-}
+            content:
