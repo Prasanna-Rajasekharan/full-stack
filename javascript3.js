@@ -52,3 +52,4 @@ postList.appendChild(postItem);
 // Initial setup
 if (localStorage.getItem('posts') === null) {
 localStorage.setItem('posts', JSON.stringify([]));
+}
