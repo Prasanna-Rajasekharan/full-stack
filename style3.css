@@ -1,53 +1,114 @@
+@import url("https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap");
+
 body {
-    font-family: Arial, sans-serif;
-}
-header {
-    background-color: #333;
-    color: #fff;
-    text-align: center;
-    padding: 1rem;
-}
-main {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 2rem;
-}
-#login-form, #user-dashboard {
-    margin-bottom: 2rem;
-}
-#login-form h2, #user-dashboard h2, #feed h2 {
-    margin-bottom: 1rem;
-}
-input, textarea, button {
-    margin: 0.5rem; 
-    padding: 0.3rem;
-}
-button {
-    background-color: #333;
-    color: #fff;
-    border: none; 
-    cursor: pointer;
-}
-ul {
-    list-style-type: none;
-    padding-left: 0;
-}
-li {
-    border: 1px solid #ddd;
-    padding: 1rem;
-    margin-bottom: 1rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-li p {
+    font-family: "Roboto", sans-serif;
+    background-color: #f0f2f5;
     margin: 0;
+    padding: 0;
 }
-.like-btn {
-    background-color: #008CBA;
-    color: white;
-    padding: 5px 10px;
-    border: none;
-    cursor: pointer;
+
+.container {
+    width: 100%;
+    max-width: 600px;
+    margin: 50px auto;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+h1, h2, h3 {
+    text-align: center;
+    color: #333;
+}
+
+input, textarea {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
     border-radius: 5px;
+    border: 1px solid #ddd;
+}
+
+button {
+    padding: 10px 15px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+#postContent, #imageUpload {
+    margin-bottom: 15px;
+}
+
+.post {
+    background-color: #f8f9fa;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+}
+
+.post strong {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.post-image {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    margin-top: 10px;
+    cursor: pointer;
+}
+
+.reactions {
+    margin-top: 10px;
+}
+
+.reactions button {
+    margin-right: 5px;
+}
+
+.comments {
+    margin-top: 10px;
+}
+
+.comments-list {
+    margin-bottom: 10px;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.9);
+}
+
+.modal-content {
+    display: block;
+    margin: auto;
+    max-width: 90%;
+    max-height: 90%;
+}
+
+.close {
+    position: absolute;
+    top: 15px;
+    right: 35px;
+    color: #fff;
+    font-size: 40px;
+    font-weight: bold;
+    cursor: pointer;
 }
