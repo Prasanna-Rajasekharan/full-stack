@@ -1,0 +1,43 @@
+//public/index.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Micro Blogging App</title>
+    <link rel="stylesheet" href="style3.css" />
+</head>
+<body>
+    <div class="container">
+        <div id="registration">
+            <h1>Register</h1>
+            <input type="text" id="username" placeholder="Username" />
+            <input type="password" id="password" placeholder="Password" />
+            <button onclick="registerUser()">Register</button>
+        </div>
+
+        <div id="feed" style="display: none">
+            <h2>Your Feed</h2>
+            <textarea id="postContent" placeholder="What's on your mind?"></textarea>
+            <input type="file" id="imageUpload" />
+            <button onclick="createPost()">Post</button>
+
+            <h3>Posts</h3>
+            <div id="posts"></div>
+
+            <h3>Follow/Unfollow Users</h3>
+            <input type="text" id="followUsername" placeholder="Username to Follow/Unfollow" />
+            <button onclick="followUser()">Follow</button>
+            <button onclick="unfollowUser()">Unfollow</button>
+        </div>
+
+        <!-- Modal for fullscreen image view -->
+        <div id="imageModal" class="modal">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <img class="modal-content" id="fullImage" />
+        </div>
+    </div>
+
+    <script src="javascript3.js"></script>
+</body>
+</html>
