@@ -1,246 +1,279 @@
-let currentUserUsername = null;
+let currentUser = null;
+let users = JSON.parse(localStorage.getItem('users')) || [];
+let posts = JSON.parse(localStorage.getItem('posts')) || [];
+const following = new Set();
 
-async function registerUser() {
-    const username = document.getElementById("username").value;
-    const password = document.getElementById("password").value;
+const authTitle = document.getElementById('form-title');
+const authBtn = document.getElementById('auth-btn');
+const authError = document.getElementById('auth-error');
+const authToggleText = document.getElementById('auth-toggle-text');
+const toggleLink = document.getElementById('toggle-link');
+const confirmPasswordInput = document.getElementById('auth-confirm-password');
+
+// Toggle between Login and Register
+let isLogin = true;
+
+toggleLink.addEventListener('click', function () {
+    if (isLogin) {
+        authTitle.textContent = 'Register';
+        authBtn.textContent = 'Register';
+        confirmPasswordInput.classList.remove('hidden');
+        authToggleText.innerHTML = 'Already have an account? <a href="#">Login here</a>';
+        isLogin = false;
+    } else {
+        authTitle.textContent = 'Login';
+        authBtn.textContent = 'Login';
+        confirmPasswordInput.classList.add('hidden');
+        authToggleText.innerHTML = 'New user? <a href="#">Register here</a>';
+        isLogin = true;
+    }
+});
+
+// Registration and Login functionality in one form
+document.getElementById('auth-btn').addEventListener('click', function () {
+    const username = document.getElementById('auth-username').value.trim();
+    const password = document.getElementById('auth-password').value.trim();
+    const confirmPassword = document.getElementById('auth-confirm-password').value.trim();
 
     if (!username || !password) {
-        alert("Please fill in both fields!");
+        authError.textContent = 'Username and Password are required.';
+        authError.classList.remove('hidden');
         return;
     }
 
-    try {
-        const response = await fetch("http://localhost:5000/api/register", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username, password }),
-        });
+    if (isLogin) {
+        // Login logic
+        const user = users.find(user => user.username === username && user.password === password);
 
-        if (!response.ok) {
-            const errorData = await response.json();
-            alert("Failed to register: " + errorData.message);
+        if (user) {
+            currentUser = username;
+            loadFollowing();
+            document.getElementById('user-username').textContent = username;
+            document.getElementById('auth-form').classList.add('hidden');
+            document.getElementById('user-dashboard').classList.remove('hidden');
+            document.getElementById('feed').classList.remove('hidden');
+            document.getElementById('logout-btn').classList.remove('hidden');
+            displayPosts();
+            authError.classList.add('hidden');
+        } else {
+            authError.textContent = 'Invalid username or password';
+            authError.classList.remove('hidden');
+        }
+    } else {
+        // Registration logic
+        if (users.some(user => user.username === username)) {
+            authError.textContent = 'Username already exists';
+            authError.classList.remove('hidden');
             return;
         }
 
-        const data = await response.json();
-        currentUserUsername = data.username;
-        document.getElementById("registration").style.display = "none";
-        document.getElementById("feed").style.display = "block";
-        loadFeed();
-    } catch (error) {
-        alert("Error: Failed to connect to the server.");
+        if (password !== confirmPassword) {
+            authError.textContent = 'Passwords do not match';
+            authError.classList.remove('hidden');
+            return;
+        }
+
+        // Save the new user
+        users.push({ username: username, password: password });
+        localStorage.setItem('users', JSON.stringify(users));
+
+        // Automatically switch to login after registration
+        authTitle.textContent = 'Login';
+        authBtn.textContent = 'Login';
+        confirmPasswordInput.classList.add('hidden');
+        authToggleText.innerHTML = 'New user? <a href="#">Register here</a>';
+        isLogin = true;
+
+        authError.textContent = 'Registration successful! Please log in.';
+        authError.classList.remove('hidden');
     }
+});
+
+// Load following for the current user
+function loadFollowing() {
+    const userFollowing = JSON.parse(localStorage.getItem(`following_${currentUser}`)) || [];
+    userFollowing.forEach(user => following.add(user));
 }
 
+// Display Following List
+function displayFollowing() {
+    const followingList = document.getElementById('following-list');
+    followingList.innerHTML = '';
 
-async function createPost() {
-    const content = document.getElementById("postContent").value;
-    const imageUpload = document.getElementById("imageUpload").files[0];
-
-    if (!content) {
-        alert("Please enter some content before posting!");
-        return;
-    }
-
-    const formData = new FormData();
-    formData.append("content", content);
-    formData.append("authorUsername", currentUserUsername);
-    if (imageUpload) {
-        formData.append("image", imageUpload);
-    }
-
-    try {
-        const response = await fetch("http://localhost:5000/api/posts/create", {
-            method: "POST",
-            body: formData,
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            alert("Failed to create post: " + errorData.message);
-            return;
-        }
-
-        document.getElementById("postContent").value = ""; // Clear the textarea
-        loadFeed();
-    } catch (error) {
-        alert("Error: Failed to connect to the server.");
-    }
+    following.forEach(user => {
+        const li = document.createElement('li');
+        li.textContent = user;
+        followingList.appendChild(li);
+    });
 }
 
+// Post Functionality
+document.getElementById('post-btn').addEventListener('click', function() {
+    const postContent = document.getElementById('post-content').value.trim();
+    const mediaInput = document.getElementById('media-input');
+    const mediaFile = mediaInput.files[0];
 
-async function loadFeed() {
-    try {
-        const response = await fetch(http://localhost:5000/api/posts/feed/${currentUserUsername});
+    if (postContent || mediaFile) {
+        const post = {
+            content: postContent,
+            user: currentUser,
+            media: mediaFile ? URL.createObjectURL(mediaFile) : null,
+            mediaType: mediaFile ? mediaFile.type : null,
+            reactions: {
+                likes: [],
+                dislikes: [],
+                laughs: [],
+                cries: []
+            },
+            comments: []
+        };
+        posts.push(post);
+        localStorage.setItem('posts', JSON.stringify(posts));
+        displayPosts();
 
-        if (!response.ok) {
-            const errorData = await response.json();
-            alert("Failed to load feed: " + errorData.message);
-            return;
-        }
+        document.getElementById('post-content').value = '';
+        mediaInput.value = '';
+        document.getElementById('post-error').classList.add('hidden');
+    } else {
+        document.getElementById('post-error').classList.remove('hidden');
+    }
+});
 
-        const posts = await response.json();
-        const postsContainer = document.getElementById("posts");
-        postsContainer.innerHTML = ""; // Clear existing posts
+// Display Posts Functionality
+function displayPosts() {
+    const postList = document.getElementById('post-list');
+    postList.innerHTML = '';
 
-        posts.forEach((post) => {
-            const postDiv = document.createElement("div");
-            postDiv.className = "post";
-            postDiv.innerHTML = `
-                <strong>${post.authorUsername}:</strong> ${post.content}
-                ${
-                    post.imageUrl
-                        ? <img src="${post.imageUrl}" class="post-image" onclick="openModal('${post.imageUrl}')"/>
-                        : ""
+    posts.forEach((post, index) => {
+        if (following.has(post.user) || post.user === currentUser) {
+            const li = document.createElement('li');
+            let mediaHTML = '';
+
+            if (post.media) {
+                if (post.mediaType.startsWith('image/')) {
+                    mediaHTML = `<img src="${post.media}" style="max-width: 100%; height: auto;" />`;
+                } else if (post.mediaType.startsWith('video/')) {
+                    mediaHTML = `<video controls style="max-width: 100%; height: auto;"><source src="${post.media}" type="${post.mediaType}">Your browser does not support the video tag.</video>`;
                 }
-                <div class="reactions">
-                    <button onclick="reactToPost('${post.id}', 'thumbsUp')">👍 (${post.reactions.thumbsUp})</button>
-                    <button onclick="reactToPost('${post.id}', 'heart')">❤️ (${post.reactions.heart})</button>
-                    <button onclick="reactToPost('${post.id}', 'laugh')">😂 (${post.reactions.laugh})</button>
+            }
+
+            li.innerHTML = `
+                <p>${post.content}</p>
+                ${mediaHTML}
+                <p>Posted by: ${post.user}</p>
+                <div class="reaction-buttons">
+                    <button class="like-btn" data-index="${index}">❤️</button>
+                    <button class="dislike-btn" data-index="${index}">💔</button>
+                    <button class="laugh-btn" data-index="${index}">😂</button>
+                    <button class="cry-btn" data-index="${index}">😭</button>
                 </div>
-                <div class="comments">
+                <div>
+                    <span class="like-count">${post.reactions.likes.length}</span> Likes
+                    <span class="dislike-count">${post.reactions.dislikes.length}</span> Dislikes
+                    <span class="laugh-count">${post.reactions.laughs.length}</span> Laughs
+                    <span class="cry-count">${post.reactions.cries.length}</span> Cries
+                </div>
+                <div class="comments-section">
                     <h4>Comments</h4>
-                    <div class="comments-list">
-                        ${post.comments.map(comment => <p><strong>${comment.username}:</strong> ${comment.text}</p>).join("")}
-                    </div>
-                    <input type="text" placeholder="Add a comment..." id="comment_${post.id}" />
-                    <button onclick="addComment('${post.id}')">Comment</button>
+                    <ul class="comment-list">
+                        ${post.comments.map(comment => `<li>${comment.user}: ${comment.text}</li>`).join('')}
+                    </ul>
+                    <textarea class="comment-input" placeholder="Write a comment..."></textarea>
+                    <button class="comment-btn" data-index="${index}">Comment</button>
                 </div>
             `;
-            postsContainer.appendChild(postDiv);
-        });
-    } catch (error) {
-        alert("Error: Failed to connect to the server.");
-    }
-}
-
-
-async function reactToPost(postId, reactionType) {
-    try {
-        const response = await fetch("http://localhost:5000/api/posts/react", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ postId, reactionType }),
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            alert("Failed to react: " + errorData.message);
-            return;
+            postList.appendChild(li);
         }
+    });
 
-        loadFeed(); // Refresh feed to update reactions
-    } catch (error) {
-        alert("Error: Failed to connect to the server.");
-    }
+    // Add event listeners for reactions
+    document.querySelectorAll('.like-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            reactToPost(this.dataset.index, 'likes');
+        });
+    });
+
+    document.querySelectorAll('.dislike-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            reactToPost(this.dataset.index, 'dislikes');
+        });
+    });
+
+    document.querySelectorAll('.laugh-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            reactToPost(this.dataset.index, 'laughs');
+        });
+    });
+
+    document.querySelectorAll('.cry-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            reactToPost(this.dataset.index, 'cries');
+        });
+    });
+
+    // Add event listeners for comments
+    document.querySelectorAll('.comment-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            addCommentToPost(this.dataset.index);
+        });
+    });
 }
 
-// Add a comment to a post
-async function addComment(postId) {
-    const commentInput = document.getElementById(comment_${postId});
-    const commentText = commentInput.value;
+// Reaction to post functionality
+function reactToPost(postIndex, reactionType) {
+    const post = posts[postIndex];
 
-    if (!commentText) {
-        alert("Please enter a comment!");
-        return;
-    }
+    // Ensure the current user can react only once per post
+    const otherReactions = ['likes', 'dislikes', 'laughs', 'cries'].filter(type => type !== reactionType);
 
-    try {
-        const response = await fetch("http://localhost:5000/api/posts/comment", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                postId,
-                commentText,
-                commenterUsername: currentUserUsername,
-            }),
+    if (!post.reactions[reactionType].includes(currentUser)) {
+        // Remove the user from any other reaction they may have given
+        otherReactions.forEach(reaction => {
+            const userIndex = post.reactions[reaction].indexOf(currentUser);
+            if (userIndex !== -1) {
+                post.reactions[reaction].splice(userIndex, 1);
+            }
         });
 
-        if (!response.ok) {
-            const errorData = await response.json();
-            alert("Failed to add comment: " + errorData.message);
-            return;
-        }
-
-        commentInput.value = ""; // Clear the comment input
-        loadFeed(); // Refresh feed to update comments
-    } catch (error) {
-        alert("Error: Failed to connect to the server.");
+        // Add user reaction to the chosen type
+        post.reactions[reactionType].push(currentUser);
+        localStorage.setItem('posts', JSON.stringify(posts));
+        displayPosts();
     }
 }
 
+// Add comment to post functionality
+function addCommentToPost(postIndex) {
+    const commentInput = document.querySelectorAll('.comment-input')[postIndex];
+    const commentText = commentInput.value.trim();
 
-function openModal(imageUrl) {
-    const modal = document.getElementById("imageModal");
-    const fullImage = document.getElementById("fullImage");
-    fullImage.src = imageUrl;
-    modal.style.display = "block";
-}
-
-
-function closeModal() {
-    const modal = document.getElementById("imageModal");
-    modal.style.display = "none";
-}
-
-// Follow a user
-async function followUser() {
-    const followUsername = document.getElementById("followUsername").value;
-
-    if (!followUsername) {
-        alert("Please enter a username to follow!");
-        return;
-    }
-
-    try {
-        const response = await fetch("http://localhost:5000/api/follow", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                followerUsername: currentUserUsername,
-                followeeUsername: followUsername,
-            }),
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            alert("Failed to follow: " + errorData.message);
-            return;
-        }
-
-        alert("Successfully followed " + followUsername);
-    } catch (error) {
-        alert("Error: Failed to connect to the server.");
+    if (commentText) {
+        posts[postIndex].comments.push({ user: currentUser, text: commentText });
+        localStorage.setItem('posts', JSON.stringify(posts));
+        displayPosts();
     }
 }
 
+// Follow User Functionality
+document.getElementById('follow-btn').addEventListener('click', function() {
+    const followUsername = document.getElementById('follow-username').value.trim();
 
-async function unfollowUser() {
-    const unfollowUsername = document.getElementById("followUsername").value;
-
-    if (!unfollowUsername) {
-        alert("Please enter a username to unfollow!");
-        return;
+    if (followUsername && users.some(user => user.username === followUsername) && followUsername !== currentUser && !following.has(followUsername)) {
+        following.add(followUsername);
+        localStorage.setItem(`following_${currentUser}`, JSON.stringify([...following]));
+        displayFollowing();
+        document.getElementById('follow-error').classList.add('hidden');
+        document.getElementById('follow-username').value = '';
+    } else {
+        document.getElementById('follow-error').classList.remove('hidden');
     }
+});
 
-    try {
-        const response = await fetch("http://localhost:5000/api/unfollow", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                followerUsername: currentUserUsername,
-                followeeUsername: unfollowUsername,
-            }),
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            alert("Failed to unfollow: " + errorData.message);
-            return;
-        }
-
-        alert("Successfully unfollowed " + unfollowUsername);
-    } catch (error) {
-        alert("Error: Failed to connect to the server.");
-    }
-}
+// Logout functionality
+document.getElementById('logout-btn').addEventListener('click', function() {
+    currentUser = null;
+    document.getElementById('auth-form').classList.remove('hidden');
+    document.getElementById('user-dashboard').classList.add('hidden');
+    document.getElementById('feed').classList.add('hidden');
+    document.getElementById('logout-btn').classList.add('hidden');
+});
